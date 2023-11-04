@@ -106,7 +106,6 @@ class SnakeGame:
         pygame.display.flip()
         
     def _move(self, action):
-        # 
         clock_wise = [Direction.RIGHT, Direction.DOWN, Direction.LEFT, Direction.UP]
         idx = clock_wise.index(self.direction)
         if np.array_equal(action, [1,0,0]) : 

@@ -3,7 +3,7 @@ import random
 import numpy as np
 from snake_game_ai import SnakeGame, Direction, Point
 from collections import deque
-
+from model import Linear_QNet, Trainer
 
 MAX_MEMORY = 100000
 BATCH_SIZE = 1000
@@ -13,8 +13,10 @@ class Agent :
     def __init__(self) : 
         self.n_games = 0
         self.eps = 0
-        self.gamma = 0
+        self.gamma = 0.9
         self.memory = deque(maxlen=MAX_MEMORY)
+        self.model = Linear_QNet(11, 256, 3)
+        self.trainer = Trainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game) : 
         head = game.snake[0]
@@ -83,12 +85,18 @@ class Agent :
 
     def get_action(self, state) : 
         # we use eps greedy policy
-        # The more games we have the smallest epsilon will get
+        # The more games we have the smallest epsilon will get -> more exploitation
         self.eps = 80 - self.n_games
         final_move = [0,0,0]
         if random.randint(0,200) < self.eps : 
             move = random.randint(0,2)
             final_move[move] = 1
+        else : 
+            state0 = torch.tensor(state, dtype=torch.float)
+            prediction = self.model(state0)
+            move = torch.argmax(prediction).item()
+            final_move[move] = 1
+        return final_move
 
 def train() : 
     plot_scores = []
@@ -116,9 +124,8 @@ def train() :
 
             if score > record : 
                 record = score
-            
+                agent.model.save()
             print('Game', agent.n_games, 'Score', score, 'Record', record) 
-
 
 
 if __name__ == '__main__' : 
